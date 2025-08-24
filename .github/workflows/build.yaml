@@ -29,6 +29,9 @@ jobs:
         orion: false
     - name: Move FLEX to src folder
       run: mkdir src; find FLEX/Classes -type f \( -name "*.h" -o -name "*.m" -o -name "*.mm" -o -name "*.c" \) -exec cp {} src/ \;
+    - name: Patch FLEX
+      run: ../build.sh
+      working-directory: src
     - name: Build package
       run: make package
     - name: 'Upload binary as artifact'

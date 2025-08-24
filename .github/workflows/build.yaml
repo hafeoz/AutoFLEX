@@ -2,21 +2,18 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches:
-    - v*
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    tags:
+      - "**"
 jobs:
   build:
     name: Build
     runs-on: macos-13
     permissions:
-      contents: write
+      contents: write # action-gh-release
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install Theos
-      uses: Randomblock1/theos-action@v1.4
+      uses: Randomblock1/theos-action@da432cbe88433bafb9abf94dbbc979daab5fcf04
       with:
         # Where to install Theos
         theos-dir: ${{ github.workspace }}/theos
@@ -28,25 +25,11 @@ jobs:
         theos-sdks-branch: master
         # Whether to enable Orion, which adds support for Swift tweaks
         orion: false
-    - name: Run build script
-      run: chmod +x ./build.sh && ./build.sh
-    - name: Create GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: >-
-        gh release create
-        '${{ github.ref_name }}'
-        --repo '${{ github.repository }}'
-        --notes ""
-        -t 'Release ${{ github.ref_name }}'
-    - name: Upload artifact signatures to GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
-      run: >-
-        gh release upload
-        '${{ github.ref_name }}' packages/**
-        --repo '${{ github.repository }}'
-    
+    - name: Move FLEX to src folder
+      run: mkdir src; find FLEX/Classes -type f \( -name "*.h" -o -name "*.m" -o -name "*.mm" -o -name "*.c" \) -exec cp {} src/ \;
+    - name: Build package
+      run: make package
+    - name: 'Upload binary as artifact'
+      uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8
+      with:
+        files: 'packages/**'

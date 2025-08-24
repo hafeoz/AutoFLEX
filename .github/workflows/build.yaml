@@ -12,6 +12,8 @@ jobs:
       contents: write # action-gh-release
     steps:
     - uses: actions/checkout@v5
+      with:
+        submodules: recursive
     - name: Install Theos
       uses: Randomblock1/theos-action@da432cbe88433bafb9abf94dbbc979daab5fcf04
       with:
